@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Guia de bolso ilustrado de operações de Git com diagramas visuais mostrando como cada comando afeta branches e commits." />
+  <title>Guia de Bolso Ilustrado de Git</title>
+  <style>
+    :root {
+      --bg: #f6f8fa;
+      --surface: #ffffff;
+      --surface-2: #f0f3f6;
+      --text: #1f2933;
+      --text-soft: #52616b;
+      --border: #d9e0e6;
+      --accent: #2563eb;
+      --accent-soft: #e0ecff;
+      --code-bg: #0f172a;
+      --code-text: #e2e8f0;
+      --green: #16a34a;
+      --orange: #d97706;
+      --red: #dc2626;
+      --purple: #7c3aed;
+      --shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.05);
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.55;
+      font-size: 16px;
+    }
+
+    .wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 18px 64px;
+    }
+
+    header.hero {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: #fff;
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      box-shadow: var(--shadow);
+    }
+
+    header.hero h1 {
+      margin: 0 0 6px;
+      font-size: 1.7rem;
+      letter-spacing: -0.02em;
+    }
+
+    header.hero p {
+      margin: 0;
+      color: #dbeafe;
+      font-size: 0.98rem;
+    }
+
+    /* ---- Legenda ---- */
+    .legend {
+      margin-top: 18px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+      box-shadow: var(--shadow);
+    }
+    .legend h2 { margin: 0 0 10px; font-size: 1rem; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 8px 16px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+    .legend-dot { width: 16px; height: 16px; border-radius: 50%; flex: 0 0 auto; border: 2px solid rgba(0,0,0,0.15); }
+    .legend-dot.commit { background: #2563eb; }
+    .legend-dot.merge { background: #16a34a; }
+    .legend-dot.revert { background: #94a3b8; }
+    .legend-dot.highlight { background: #d97706; }
+    .legend-tag {
+      font-size: 0.72rem; font-weight: 700; background: var(--accent-soft);
+      color: var(--accent); padding: 2px 7px; border-radius: 999px; flex: 0 0 auto;
+    }
+    .legend-head {
+      font-size: 0.72rem; font-weight: 700; background: #fee2e2;
+      color: var(--red); padding: 2px 7px; border-radius: 999px; flex: 0 0 auto;
+    }
+
+    /* ---- Navegação ---- */
+    nav.toc {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(246, 248, 250, 0.92);
+      backdrop-filter: blur(6px);
+      margin: 20px 0;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    nav.toc h2 { margin: 0 0 8px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-soft); }
+    .toc-group { margin-bottom: 8px; }
+    .toc-group-title { font-size: 0.78rem; font-weight: 700; color: var(--accent); margin: 0 0 4px; }
+    .toc-links { display: flex; flex-wrap: wrap; gap: 6px; }
+    .toc-links a {
+      font-size: 0.82rem;
+      text-decoration: none;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 999px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .toc-links a:hover, .toc-links a:focus { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ---- Seções e cards ---- */
+    section.category { margin-top: 36px; }
+    section.category > h2 {
+      font-size: 1.3rem;
+      border-left: 4px solid var(--accent);
+      padding-left: 12px;
+      margin: 0 0 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 20px 8px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      scroll-margin-top: 90px;
+    }
+    .card h3 {
+      margin: 0 0 4px;
+      font-size: 1.15rem;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      color: var(--accent);
+    }
+    .card .tagline { margin: 0 0 14px; color: var(--text-soft); font-size: 0.95rem; }
+
+    code.inline {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-size: 0.88em;
+    }
+
+    pre.cmd {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 12px 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.86rem;
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+    pre.cmd .comment { color: #94a3b8; }
+
+    .meta { font-size: 0.92rem; margin: 0 0 14px; }
+    .meta strong { color: var(--text); }
+
+    .callout {
+      border-left: 4px solid var(--orange);
+      background: #fff7ed;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+      font-size: 0.9rem;
+      margin: 0 0 14px;
+      color: #7c2d12;
+    }
+    .callout.danger { border-left-color: var(--red); background: #fef2f2; color: #7f1d1d; }
+    .callout.info { border-left-color: var(--accent); background: var(--accent-soft); color: #1e3a8a; }
+
+    /* ---- Diagramas ---- */
+    .diagram {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      margin: 0 0 14px;
+      overflow-x: auto;
+    }
+    .diagram-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-soft);
+      margin: 0 0 6px;
+    }
+    .mermaid { text-align: center; }
+
+    /* Padrão "Antes -> Depois" */
+    .before-after {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      margin: 0 0 14px;
+    }
+    @media (min-width: 680px) {
+      .before-after { grid-template-columns: 1fr 1fr; }
+    }
+
+    /* Diagrama de caixas (áreas do git) desenhado com HTML/CSS */
+    .areas {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin: 0 0 14px;
+    }
+    @media (min-width: 560px) {
+      .areas { grid-template-columns: repeat(3, 1fr); align-items: stretch; }
+    }
+    .area-box {
+      position: relative;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      background: var(--surface);
+    }
+    .area-box .title { font-weight: 700; font-size: 0.85rem; display: block; margin-bottom: 4px; }
+    .area-box .sub { font-size: 0.75rem; color: var(--text-soft); }
+    .area-box.working { border-color: #93c5fd; }
+    .area-box.staging { border-color: #fcd34d; }
+    .area-box.repo { border-color: #86efac; }
+    .area-arrow {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; color: var(--text-soft); font-weight: 700;
+    }
+    .flow-step { font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.78rem; color: var(--accent); }
+
+    /* ---- Conflito de merge ---- */
+    pre.conflict {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 0;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.86rem;
+      margin: 0 0 14px;
+      line-height: 1.5;
+    }
+    pre.conflict .line { display: block; padding: 0 14px; }
+    pre.conflict .marker { font-weight: 700; }
+    pre.conflict .ours { background: rgba(37, 99, 235, 0.22); }
+    pre.conflict .ours-marker { background: rgba(37, 99, 235, 0.35); color: #bfdbfe; }
+    pre.conflict .theirs { background: rgba(22, 163, 74, 0.22); }
+    pre.conflict .theirs-marker { background: rgba(22, 163, 74, 0.35); color: #bbf7d0; }
+    pre.conflict .sep { background: rgba(148, 163, 184, 0.25); color: #cbd5e1; font-weight: 700; }
+
+    ol.steps { counter-reset: step; list-style: none; padding-left: 0; margin: 0 0 14px; }
+    ol.steps > li {
+      position: relative;
+      padding: 10px 12px 10px 46px;
+      margin-bottom: 8px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.92rem;
+    }
+    ol.steps > li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 10px; top: 10px;
+      width: 24px; height: 24px;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700;
+    }
+    ol.steps > li strong { display: block; margin-bottom: 2px; }
+
+    footer {
+      margin-top: 44px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+      font-size: 0.9rem;
+      color: var(--text-soft);
+    }
+    footer h2 { color: var(--text); font-size: 1.1rem; }
+    footer ul { padding-left: 20px; }
+    footer li { margin-bottom: 6px; }
+    .offline-note {
+      background: var(--surface);
+      border: 1px dashed var(--accent);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-top: 16px;
+    }
+    .offline-note code { font-size: 0.82rem; }
+
+    a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- ==================== HEADER + LEGENDA ==================== -->
+    <header class="hero">
+      <h1>Guia de Bolso Ilustrado de Git</h1>
+      <p>As operações mais usadas do Git, com diagramas que mostram o que acontece com seus commits e branches.</p>
+    </header>
+
+    <div class="legend">
+      <h2>Legenda dos diagramas</h2>
+      <div class="legend-grid">
+        <div class="legend-item"><span class="legend-dot commit"></span> Commit normal</div>
+        <div class="legend-item"><span class="legend-dot merge"></span> Commit de merge</div>
+        <div class="legend-item"><span class="legend-dot revert"></span> Commit de revert</div>
+        <div class="legend-item"><span class="legend-dot highlight"></span> Commit em destaque</div>
+        <div class="legend-item"><span class="legend-tag">v1.0</span> Tag / rótulo</div>
+        <div class="legend-item"><span class="legend-head">HEAD</span> Branch atual (onde você está)</div>
+        <div class="legend-item">Linhas horizontais = histórico de uma branch</div>
+        <div class="legend-item">Cada cor = uma branch diferente</div>
+      </div>
+    </div>
+
+    <!-- ==================== NAVEGAÇÃO / ÍNDICE ==================== -->
+    <nav class="toc" aria-label="Índice">
+      <h2>Índice</h2>
+      <div class="toc-group">
+        <p class="toc-group-title">Fundamentos</p>
+        <div class="toc-links">
+          <a href="#init">init</a>
+          <a href="#clone">clone</a>
+          <a href="#status">status</a>
+          <a href="#add">add</a>
+          <a href="#commit">commit</a>
+          <a href="#log">log</a>
+        </div>
+      </div>
+      <div class="toc-group">
+        <p class="toc-group-title">Branches e integração</p>
+        <div class="toc-links">
+          <a href="#branch">branch</a>
+          <a href="#checkout">checkout / switch</a>
+          <a href="#merge">merge</a>
+          <a href="#conflitos">conflitos de merge</a>
+          <a href="#rebase">rebase</a>
+          <a href="#cherry-pick">cherry-pick</a>
+        </div>
+      </div>
+      <div class="toc-group">
+        <p class="toc-group-title">Desfazer e reverter</p>
+        <div class="toc-links">
+          <a href="#reset">reset</a>
+          <a href="#revert">revert</a>
+          <a href="#stash">stash</a>
+        </div>
+      </div>
+      <div class="toc-group">
+        <p class="toc-group-title">Trabalhando com remoto</p>
+        <div class="toc-links">
+          <a href="#fetch">fetch</a>
+          <a href="#pull">pull</a>
+          <a href="#push">push</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ==================== FUNDAMENTOS ==================== -->
+    <section class="category" id="fundamentos">
+      <h2>Fundamentos</h2>
+
+      <!-- init -->
+      <article class="card" id="init">
+        <h3>git init</h3>
+        <p class="tagline">Cria um repositório Git novo e vazio no diretório atual.</p>
+        <pre class="cmd">git init                 <span class="comment"># inicializa o repositório</span>
+git init nome-do-projeto <span class="comment"># cria a pasta e inicializa</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> ao começar a versionar um projeto que ainda não está sob controle de versão.</p>
+        <p class="diagram-label">As três áreas do Git</p>
+        <div class="areas">
+          <div class="area-box working"><span class="title">Working Directory</span><span class="sub">seus arquivos em edição</span></div>
+          <div class="area-box staging"><span class="title">Staging (Index)</span><span class="sub">o que entrará no próximo commit</span></div>
+          <div class="area-box repo"><span class="title">Repositório</span><span class="sub">histórico de commits (.git)</span></div>
+        </div>
+        <p class="meta"><code class="inline">git init</code> apenas cria a pasta <code class="inline">.git</code> (o Repositório). Nenhum commit existe ainda.</p>
+      </article>
+
+      <!-- clone -->
+      <article class="card" id="clone">
+        <h3>git clone</h3>
+        <p class="tagline">Baixa uma cópia completa de um repositório remoto, com todo o histórico.</p>
+        <pre class="cmd">git clone https://github.com/usuario/projeto.git
+git clone git@github.com:usuario/projeto.git pasta-local</pre>
+        <p class="meta"><strong>Quando usar:</strong> para obter um projeto existente e começar a trabalhar nele.</p>
+        <div class="diagram">
+          <p class="diagram-label">O histórico remoto vem inteiro para a sua máquina</p>
+          <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B"
+   commit id: "C" tag: "origin/main"
+          </pre>
+        </div>
+        <p class="meta">Após o clone, você tem o histórico completo localmente e um remoto configurado como <code class="inline">origin</code>.</p>
+      </article>
+
+      <!-- status -->
+      <article class="card" id="status">
+        <h3>git status</h3>
+        <p class="tagline">Mostra o estado atual: o que mudou, o que está em staging e em qual branch você está.</p>
+        <pre class="cmd">git status
+git status -s   <span class="comment"># formato curto</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> a qualquer momento, para entender onde você está antes de agir. É uma operação só de leitura — não altera nada.</p>
+        <div class="areas">
+          <div class="area-box working"><span class="title">Working Directory</span><span class="sub">arquivos <em>modified</em> / <em>untracked</em></span></div>
+          <div class="area-box staging"><span class="title">Staging</span><span class="sub">arquivos <em>staged</em></span></div>
+          <div class="area-box repo"><span class="title">Repositório</span><span class="sub">commits confirmados</span></div>
+        </div>
+        <p class="meta"><code class="inline">git status</code> olha para as três áreas e resume as diferenças entre elas.</p>
+      </article>
+
+      <!-- add -->
+      <article class="card" id="add">
+        <h3>git add</h3>
+        <p class="tagline">Move alterações do Working Directory para o Staging, preparando o próximo commit.</p>
+        <pre class="cmd">git add arquivo.txt   <span class="comment"># um arquivo</span>
+git add .             <span class="comment"># tudo na pasta atual</span>
+git add -p            <span class="comment"># escolher pedaços interativamente</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> depois de editar arquivos, para selecionar o que entra no commit.</p>
+        <div class="areas">
+          <div class="area-box working"><span class="title">Working Directory</span></div>
+          <div class="area-arrow"><span class="flow-step">git add &rarr;</span></div>
+          <div class="area-box staging"><span class="title">Staging</span></div>
+        </div>
+        <p class="meta"><code class="inline">git add</code> não cria commit; apenas marca <em>o que</em> será commitado.</p>
+      </article>
+
+      <!-- commit -->
+      <article class="card" id="commit">
+        <h3>git commit</h3>
+        <p class="tagline">Grava no histórico tudo que está em staging, criando um novo ponto no tempo.</p>
+        <pre class="cmd">git commit -m "mensagem clara do que mudou"
+git commit -am "mensagem"   <span class="comment"># add + commit de arquivos já rastreados</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> quando um conjunto de mudanças forma uma unidade lógica e coesa.</p>
+        <div class="areas">
+          <div class="area-box staging"><span class="title">Staging</span></div>
+          <div class="area-arrow"><span class="flow-step">git commit &rarr;</span></div>
+          <div class="area-box repo"><span class="title">Repositório</span></div>
+        </div>
+        <div class="diagram">
+          <p class="diagram-label">Cada commit vira um novo nó na branch</p>
+          <pre class="mermaid">
+gitGraph
+   commit id: "inicial"
+   commit id: "funcao login"
+   commit id: "corrige bug"
+          </pre>
+        </div>
+      </article>
+
+      <!-- log -->
+      <article class="card" id="log">
+        <h3>git log</h3>
+        <p class="tagline">Lista o histórico de commits — autor, data, mensagem e hash.</p>
+        <pre class="cmd">git log
+git log --oneline            <span class="comment"># resumido, 1 linha por commit</span>
+git log --oneline --graph    <span class="comment"># desenha o grafo no terminal</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> para revisar o que já foi feito. Operação só de leitura — não altera o histórico.</p>
+        <div class="diagram">
+          <p class="diagram-label">O que o log percorre é exatamente este grafo</p>
+          <pre class="mermaid">
+gitGraph
+   commit id: "a1b2c3"
+   commit id: "d4e5f6"
+   commit id: "9f8e7d" tag: "HEAD"
+          </pre>
+        </div>
+      </article>
+    </section>
+
+    <!-- ==================== BRANCHES E INTEGRAÇÃO ==================== -->
+    <section class="category" id="branches">
+      <h2>Branches e integração</h2>
+
+      <!-- branch -->
+      <article class="card" id="branch">
+        <h3>git branch</h3>
+        <p class="tagline">Cria, lista ou apaga branches. Uma branch é um ponteiro móvel para um commit.</p>
+        <pre class="cmd">git branch                 <span class="comment"># lista as branches</span>
+git branch nova-feature    <span class="comment"># cria (sem trocar para ela)</span>
+git branch -d nova-feature <span class="comment"># apaga uma branch já integrada</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> para isolar um trabalho (feature, correção) sem afetar a linha principal.</p>
+        <div class="diagram">
+          <p class="diagram-label">A nova branch parte do commit atual</p>
+          <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B"
+   branch nova-feature
+   commit id: "C"
+          </pre>
+        </div>
+      </article>
+
+      <!-- checkout / switch -->
+      <article class="card" id="checkout">
+        <h3>git checkout / git switch</h3>
+        <p class="tagline">Troca a branch ativa movendo o HEAD. <code class="inline">switch</code> é a forma moderna e mais segura.</p>
+        <pre class="cmd">git switch nova-feature       <span class="comment"># troca de branch</span>
+git switch -c outra-feature   <span class="comment"># cria e já troca</span>
+git checkout nova-feature     <span class="comment"># forma clássica (equivalente)</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> para sair de uma branch e trabalhar em outra. O HEAD passa a apontar para a branch escolhida.</p>
+        <div class="diagram">
+          <p class="diagram-label">HEAD agora segue a branch "nova-feature"</p>
+          <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B"
+   branch nova-feature
+   checkout nova-feature
+   commit id: "C" type: HIGHLIGHT
+          </pre>
+        </div>
+      </article>
+
+      <!-- merge -->
+      <article class="card" id="merge">
+        <h3>git merge</h3>
+        <p class="tagline">Junta o histórico de outra branch na branch atual, geralmente criando um commit de merge.</p>
+        <pre class="cmd">git switch main
+git merge nova-feature   <span class="comment"># traz a feature para a main</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> para integrar um trabalho concluído preservando o histórico real de ambas as branches.</p>
+        <div class="diagram">
+          <p class="diagram-label">O merge preserva as duas linhas e as une em um commit</p>
+          <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B"
+   branch nova-feature
+   checkout nova-feature
+   commit id: "C"
+   commit id: "D"
+   checkout main
+   merge nova-feature
+          </pre>
+        </div>
+        <p class="callout info">O ponto verde é o <strong>commit de merge</strong>: ele tem dois pais e marca onde as histórias se encontraram.</p>
+      </article>
+
+      <!-- conflitos de merge -->
+      <article class="card" id="conflitos">
+        <h3>Conflitos de merge</h3>
+        <p class="tagline">Acontecem quando duas branches alteram as mesmas linhas de um arquivo (ou uma apaga o que a outra editou) e o Git não consegue decidir sozinho qual versão manter.</p>
+        <p class="meta"><strong>Por que ocorre:</strong> durante um <code class="inline">merge</code> (ou <code class="inline">rebase</code>/<code class="inline">cherry-pick</code>), o Git combina as mudanças automaticamente quando elas estão em partes diferentes do arquivo. Quando as edições se sobrepõem, ele para e pede sua decisão.</p>
+
+        <div class="diagram">
+          <p class="diagram-label">As duas branches mudaram a mesma linha — o merge não fecha sozinho</p>
+          <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B"
+   branch nova-feature
+   checkout nova-feature
+   commit id: "C (edita linha 10)"
+   checkout main
+   commit id: "D (edita linha 10)"
+          </pre>
+        </div>
+        <p class="meta">Ao rodar <code class="inline">git merge nova-feature</code> nesse cenário, o Git interrompe o merge e marca o arquivo como <em>conflitado</em>.</p>
+
+        <p class="meta">Dentro do arquivo, o Git insere <strong>marcadores de conflito</strong> delimitando as duas versões:</p>
+        <pre class="conflict"><span class="line ours-marker marker">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</span><span class="line ours">    preco = valor * 1.10   # sua versão (branch atual / main)</span><span class="line sep">=======</span><span class="line theirs">    preco = valor * 1.15   # versão que entra (nova-feature)</span><span class="line theirs-marker marker">&gt;&gt;&gt;&gt;&gt;&gt;&gt; nova-feature</span></pre>
+        <p class="meta">
+          <span style="color:#2563eb;font-weight:700;">Azul (entre <code class="inline">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code> e <code class="inline">=======</code>):</span> o conteúdo da sua branch atual (o "nosso" / <em>ours</em>).<br>
+          <span style="color:#16a34a;font-weight:700;">Verde (entre <code class="inline">=======</code> e <code class="inline">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>):</span> o conteúdo que está sendo integrado (o "deles" / <em>theirs</em>).
+        </p>
+
+        <p class="diagram-label">Passos para resolver</p>
+        <ol class="steps">
+          <li><strong>Veja o que está em conflito</strong><code class="inline">git status</code> lista os arquivos marcados como <em>Unmerged paths</em>.</li>
+          <li><strong>Abra cada arquivo conflitado</strong>Procure os marcadores <code class="inline">&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code class="inline">=======</code> e <code class="inline">&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code>.</li>
+          <li><strong>Escolha a versão final</strong>Edite o trecho deixando o código correto: pode ser uma das versões, ou uma combinação das duas. Apague <strong>todos</strong> os marcadores de conflito.</li>
+          <li><strong>Marque como resolvido</strong>Rode <code class="inline">git add arquivo</code> para sinalizar ao Git que aquele conflito foi tratado.</li>
+          <li><strong>Conclua a operação</strong>Faça <code class="inline">git commit</code> para finalizar o merge (o Git já sugere uma mensagem). Em rebase, use <code class="inline">git rebase --continue</code>.</li>
+        </ol>
+
+        <pre class="cmd">git merge nova-feature       <span class="comment"># merge para e avisa do conflito</span>
+git status                   <span class="comment"># 1. ver arquivos conflitados</span>
+<span class="comment"># 2-3. editar os arquivos e remover os marcadores</span>
+git add arquivo.py           <span class="comment"># 4. marcar como resolvido</span>
+git commit                   <span class="comment"># 5. concluir o merge</span></pre>
+
+        <p class="callout info">Mudou de ideia no meio? <code class="inline">git merge --abort</code> cancela o merge e devolve a branch ao estado anterior ao conflito.</p>
+        <p class="callout">Ferramentas ajudam: <code class="inline">git mergetool</code> abre um editor visual de conflitos, e editores como o VS Code mostram botões "Accept Current / Incoming / Both" sobre cada bloco.</p>
+      </article>
+
+      <!-- rebase -->
+      <article class="card" id="rebase">
+        <h3>git rebase</h3>
+        <p class="tagline">Reaplica seus commits sobre outra base, reescrevendo o histórico para deixá-lo linear.</p>
+        <pre class="cmd">git switch nova-feature
+git rebase main   <span class="comment"># reaplica os commits da feature sobre a main</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> para manter um histórico limpo e linear antes de integrar. Diferente do merge, não cria commit de junção.</p>
+        <div class="before-after">
+          <div class="diagram">
+            <p class="diagram-label">Antes do rebase</p>
+            <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B"
+   branch nova-feature
+   checkout nova-feature
+   commit id: "C"
+   commit id: "D"
+   checkout main
+   commit id: "E"
+            </pre>
+          </div>
+          <div class="diagram">
+            <p class="diagram-label">Depois do rebase (C e D reaplicados sobre E)</p>
+            <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B"
+   commit id: "E"
+   branch nova-feature
+   checkout nova-feature
+   commit id: "C'"
+   commit id: "D'"
+            </pre>
+          </div>
+        </div>
+        <p class="callout danger">Nunca faça rebase de commits que já foram enviados e compartilhados no remoto: reescrever esse histórico quebra o repositório dos colegas.</p>
+      </article>
+
+      <!-- cherry-pick -->
+      <article class="card" id="cherry-pick">
+        <h3>git cherry-pick</h3>
+        <p class="tagline">Copia um commit específico de outra branch para a branch atual.</p>
+        <pre class="cmd">git switch main
+git cherry-pick a1b2c3   <span class="comment"># aplica só aquele commit aqui</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> quando você quer apenas uma correção pontual de outra branch, sem trazer todo o resto.</p>
+        <div class="diagram">
+          <p class="diagram-label">O commit "C" é copiado para a main</p>
+          <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B"
+   branch correcao
+   checkout correcao
+   commit id: "C"
+   commit id: "D"
+   checkout main
+   cherry-pick id: "C"
+          </pre>
+        </div>
+        <p class="callout info">O cherry-pick cria um <strong>novo commit</strong> na main com o mesmo conteúdo de "C" (hash diferente). O "C" original continua na branch de origem.</p>
+      </article>
+    </section>
+
+    <!-- ==================== DESFAZER E REVERTER ==================== -->
+    <section class="category" id="desfazer">
+      <h2>Desfazer e reverter</h2>
+
+      <!-- reset -->
+      <article class="card" id="reset">
+        <h3>git reset</h3>
+        <p class="tagline">Move o ponteiro da branch (e o HEAD) para outro commit. É uma operação local e potencialmente destrutiva.</p>
+        <pre class="cmd">git reset --soft HEAD~1   <span class="comment"># desfaz o commit, mantém tudo em staging</span>
+git reset --mixed HEAD~1  <span class="comment"># desfaz commit e staging (padrão)</span>
+git reset --hard HEAD~1   <span class="comment"># desfaz commit, staging E alterações locais</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> para desfazer commits locais ainda não compartilhados.</p>
+        <div class="before-after">
+          <div class="diagram">
+            <p class="diagram-label">Antes — HEAD em "D"</p>
+            <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B"
+   commit id: "C"
+   commit id: "D" tag: "HEAD"
+            </pre>
+          </div>
+          <div class="diagram">
+            <p class="diagram-label">Depois de reset para "B" — "C" e "D" ficam órfãos</p>
+            <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B" tag: "HEAD"
+            </pre>
+          </div>
+        </div>
+        <p class="meta">O que cada modo faz com suas mudanças ao recuar o commit:</p>
+        <div class="areas">
+          <div class="area-box repo"><span class="title">--soft</span><span class="sub">mudanças voltam para o Staging</span></div>
+          <div class="area-box staging"><span class="title">--mixed</span><span class="sub">mudanças voltam para o Working Directory</span></div>
+          <div class="area-box working"><span class="title">--hard</span><span class="sub">mudanças são descartadas</span></div>
+        </div>
+        <p class="callout danger"><code class="inline">git reset --hard</code> apaga alterações não commitadas de forma difícil de recuperar. Use com cuidado.</p>
+      </article>
+
+      <!-- revert -->
+      <article class="card" id="revert">
+        <h3>git revert</h3>
+        <p class="tagline">Desfaz o efeito de um commit criando um novo commit que inverte as mudanças.</p>
+        <pre class="cmd">git revert a1b2c3   <span class="comment"># cria um commit que desfaz "a1b2c3"</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> para desfazer algo que já está compartilhado no remoto, sem reescrever o histórico.</p>
+        <div class="diagram">
+          <p class="diagram-label">Em vez de apagar, adiciona um commit "reverso"</p>
+          <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B"
+   commit id: "C"
+   commit id: "revert C" type: REVERSE
+          </pre>
+        </div>
+        <p class="callout info"><strong>reset vs revert:</strong> o <code class="inline">reset</code> remove commits movendo o ponteiro (reescreve histórico); o <code class="inline">revert</code> preserva o histórico e adiciona um commit que anula o anterior. Em branches compartilhadas, prefira <code class="inline">revert</code>.</p>
+      </article>
+
+      <!-- stash -->
+      <article class="card" id="stash">
+        <h3>git stash</h3>
+        <p class="tagline">Guarda temporariamente mudanças não commitadas e limpa o Working Directory.</p>
+        <pre class="cmd">git stash            <span class="comment"># guarda as mudanças atuais</span>
+git stash list       <span class="comment"># vê o que está guardado</span>
+git stash pop        <span class="comment"># recupera e remove da pilha</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> quando precisa trocar de contexto (ex.: uma correção urgente) sem commitar um trabalho pela metade.</p>
+        <div class="before-after">
+          <div class="diagram">
+            <p class="diagram-label">Antes do stash</p>
+            <div class="areas" style="grid-template-columns:1fr;">
+              <div class="area-box working"><span class="title">Working Directory</span><span class="sub">mudanças em andamento</span></div>
+            </div>
+          </div>
+          <div class="diagram">
+            <p class="diagram-label">Depois do stash</p>
+            <div class="areas" style="grid-template-columns:1fr;">
+              <div class="area-box working"><span class="title">Working Directory</span><span class="sub">limpo</span></div>
+              <div class="area-box staging"><span class="title">Pilha de stash</span><span class="sub">mudanças guardadas aqui</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="meta">O histórico de commits não muda: o stash vive numa área separada até você aplicar com <code class="inline">pop</code> ou <code class="inline">apply</code>.</p>
+      </article>
+    </section>
+
+    <!-- ==================== REMOTO ==================== -->
+    <section class="category" id="remoto">
+      <h2>Trabalhando com remoto</h2>
+
+      <!-- fetch -->
+      <article class="card" id="fetch">
+        <h3>git fetch</h3>
+        <p class="tagline">Baixa commits e referências do remoto, <strong>sem</strong> alterar suas branches locais.</p>
+        <pre class="cmd">git fetch origin   <span class="comment"># atualiza as refs remotas (origin/*)</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> para ver o que mudou no remoto antes de integrar, sem riscos.</p>
+        <div class="before-after">
+          <div class="diagram">
+            <p class="diagram-label">Antes — local atrás do remoto</p>
+            <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B" tag: "main (local)"
+            </pre>
+          </div>
+          <div class="diagram">
+            <p class="diagram-label">Depois do fetch — origin/main atualizou, main local parada</p>
+            <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B" tag: "main (local)"
+   branch origin/main
+   checkout origin/main
+   commit id: "C"
+            </pre>
+          </div>
+        </div>
+        <p class="meta">Sua branch <code class="inline">main</code> continua em "B". Você vê "C" via <code class="inline">origin/main</code>, mas ainda precisa integrá-lo.</p>
+      </article>
+
+      <!-- pull -->
+      <article class="card" id="pull">
+        <h3>git pull</h3>
+        <p class="tagline">É um <code class="inline">fetch</code> seguido de integração (merge ou rebase) na branch atual.</p>
+        <pre class="cmd">git pull                 <span class="comment"># fetch + merge (padrão)</span>
+git pull --rebase        <span class="comment"># fetch + rebase (histórico linear)</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> para trazer e já aplicar as novidades do remoto na sua branch.</p>
+        <div class="before-after">
+          <div class="diagram">
+            <p class="diagram-label">Antes — origin/main tem "C" que você não tem</p>
+            <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B" tag: "main (local)"
+   branch origin/main
+   checkout origin/main
+   commit id: "C"
+            </pre>
+          </div>
+          <div class="diagram">
+            <p class="diagram-label">Depois do pull — "C" integrado à main local</p>
+            <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B"
+   commit id: "C" tag: "main (local)"
+            </pre>
+          </div>
+        </div>
+        <p class="callout info"><strong>fetch vs pull:</strong> o <code class="inline">fetch</code> só baixa; o <code class="inline">pull</code> baixa e já integra na sua branch atual.</p>
+      </article>
+
+      <!-- push -->
+      <article class="card" id="push">
+        <h3>git push</h3>
+        <p class="tagline">Envia seus commits locais para o remoto, atualizando a branch remota.</p>
+        <pre class="cmd">git push                       <span class="comment"># envia a branch atual</span>
+git push -u origin minha-branch <span class="comment"># 1ª vez: cria e vincula a branch remota</span></pre>
+        <p class="meta"><strong>Quando usar:</strong> para compartilhar seu trabalho e atualizar o repositório remoto.</p>
+        <div class="before-after">
+          <div class="diagram">
+            <p class="diagram-label">Antes — local à frente do remoto</p>
+            <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B" tag: "origin/main"
+   commit id: "C" tag: "main (local)"
+            </pre>
+          </div>
+          <div class="diagram">
+            <p class="diagram-label">Depois do push — remoto alcança o local</p>
+            <pre class="mermaid">
+gitGraph
+   commit id: "A"
+   commit id: "B"
+   commit id: "C" tag: "origin/main = main"
+            </pre>
+          </div>
+        </div>
+        <p class="callout danger">Evite <code class="inline">git push --force</code> em branches compartilhadas. Se precisar, prefira <code class="inline">--force-with-lease</code>, que protege contra sobrescrever trabalho alheio.</p>
+      </article>
+    </section>
+
+    <!-- ==================== RODAPÉ ==================== -->
+    <footer>
+      <h2>Dicas rápidas</h2>
+      <ul>
+        <li>Faça commits pequenos e com mensagens claras — facilita entender e desfazer depois.</li>
+        <li>Rode <code class="inline">git status</code> sempre antes de <code class="inline">add</code>/<code class="inline">commit</code> para evitar surpresas.</li>
+        <li>Em branches compartilhadas, prefira <code class="inline">merge</code>/<code class="inline">revert</code> a <code class="inline">rebase</code>/<code class="inline">reset</code>.</li>
+        <li>Perdeu um commit após um <code class="inline">reset</code>? Procure em <code class="inline">git reflog</code> antes de entrar em pânico.</li>
+      </ul>
+
+      <div class="offline-note">
+        <strong>Usar este guia 100% offline:</strong>
+        <p>Por padrão o Mermaid é carregado via CDN (precisa de internet na primeira abertura). Para funcionar sem rede:</p>
+        <ol>
+          <li>Baixe o arquivo <code>mermaid.min.js</code> (do site oficial do Mermaid ou do CDN) e salve ao lado deste HTML.</li>
+          <li>No final deste arquivo, troque a tag do CDN por: <br>
+            <code>&lt;script src="mermaid.min.js"&gt;&lt;/script&gt;</code></li>
+        </ol>
+      </div>
+      <p style="margin-top:16px;">Guia de bolso ilustrado de Git — feito para consulta rápida.</p>
+    </footer>
+
+  </div>
+
+  <!-- Mermaid via CDN. Para uso offline, veja a nota no rodapé. -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: "default",
+      gitGraph: { showBranches: true, showCommitLabel: true, mainBranchName: "main" }
+    });
+  </script>
+</body>
+</html>
